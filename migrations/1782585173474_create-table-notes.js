@@ -18,6 +18,7 @@ export const up = (pgm) => {
       type: 'TEXT[]',
       notNull: true,
     },
+    /* eslint-disable camelcase */
     created_at: {
       type: 'TEXT',
       notNull: true,
