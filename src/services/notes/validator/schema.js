@@ -7,7 +7,10 @@ export const notePayloadSchema = Joi.object({
 });
 
 export const noteQuerySchema = Joi.object({
-  title: Joi.string().empty(),
+  title: Joi.alternatives().try(
+    Joi.string().empty(),
+    Joi.array().items(Joi.string())
+  ),
 });
 
 export const noteUpdatePayloadSchema = Joi.object({

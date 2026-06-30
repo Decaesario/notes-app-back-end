@@ -17,24 +17,25 @@ export const createNote = async (req, res, next) => {
 
 export const getNotes = async (req, res) => {
   const { id: owner } = req.user;
-  const notes = await NoteRepositories.getNotes(owner);
+  const { title } = req.validated;
+  const notes = await NoteRepositories.getNotes(owner, title);
   return response(res, 200, 'Catatan sukses ditampilkan', { notes });
 };
 
 export const getNoteById = async (req, res, next) => {
   const { id } = req.params;
   const { id: owner } = req.user;
-  const isOwner = await NoteRepositories.verifyNoteOwner(id, owner);
+  const access = await NoteRepositories.verifyNoteAccess(id, owner);
 
-  if (!isOwner) {
+  if (access === 'not_found') {
+    return next(new NotFoundError('Catatan tidak ditemukan'));
+  }
+
+  if (access === 'forbidden') {
     return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
   }
 
   const note = await NoteRepositories.getNoteById(id);
-
-  if (!note) {
-    return next(new NotFoundError('Catatan tidak ditemukan'));
-  }
 
   return response(res, 200, 'Catatan sukses ditampilkan', { note });
 };
@@ -43,9 +44,13 @@ export const editNoteById = async (req, res, next) => {
   const { id } = req.params;
   const { title, body, tags } = req.validated;
   const { id: owner } = req.user;
-  const isOwner = await NoteRepositories.verifyNoteOwner(id, owner);
+  const access = await NoteRepositories.verifyNoteAccess(id, owner);
 
-  if (!isOwner) {
+  if (access === 'not_found') {
+    return next(new NotFoundError('Catatan tidak ditemukan'));
+  }
+
+  if (access === 'forbidden') {
     return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
   }
 
@@ -63,7 +68,11 @@ export const deleteNoteById = async (req, res, next) => {
   const { id: owner } = req.user;
   const isOwner = await NoteRepositories.verifyNoteOwner(id, owner);
 
-  if (!isOwner) {
+  if (isOwner === 'not_found') {
+    return next(new NotFoundError('Catatan tidak ditemukan'));
+  }
+
+  if (isOwner === 'forbidden') {
     return next(new AuthorizationError('Anda tidak berhak mengakses resource ini'));
   }
 

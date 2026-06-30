@@ -29,7 +29,6 @@ class UserRepositories {
     };
 
     const result = await this._pool.query(query);
-
     return result.rows.length > 0;
   }
 
@@ -50,17 +49,28 @@ class UserRepositories {
     };
 
     const user = await this._pool.query(query);
-    if (!user) {
+
+    if (!user.rows.length) {
       return null;
     }
 
     const { id, password: hashedPassword } = user.rows[0];
-    const isPasswordNatch = await bcrypt.compare(password, hashedPassword);
+    const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
 
-    if (!isPasswordNatch) {
+    if (!isPasswordMatch) {
       return null;
     }
+
     return id;
+  }
+
+  async getUsersByUsername(username) {
+    const query = {
+      text: 'SELECT id, username, fullname FROM users WHERE username LIKE $1',
+      values: [`%${username}%`],
+    };
+    const result = await this._pool.query(query);
+    return result.rows;
   }
 }
 
